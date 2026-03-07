@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Элементы решения/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Lockena.API/Lockena.API.csproj" Id="17eacfb8-e85e-4770-9965-5f0e59fa0373">
+    <BuildDependency Project="Lockena.Application/Lockena.Application.csproj" />
+  </Project>
+  <Project Path="Lockena.Application/Lockena.Application.csproj" Id="1f1b89a7-0ef7-4db5-9f5a-24dcc8eb0e4b">
+    <BuildDependency Project="Lockena.Domain/Lockena.Domain.csproj" />
+  </Project>
+  <Project Path="Lockena.Domain/Lockena.Domain.csproj" Id="346c4e6a-d4de-46bc-befb-316cf06918a7" />
+  <Project Path="Lockena.Infrastructure/Lockena.Infrastructure.csproj" Id="3b5af8f4-1356-43d0-9e26-d33262030cb9">
+    <BuildDependency Project="Lockena.Application/Lockena.Application.csproj" />
+    <BuildDependency Project="Lockena.Domain/Lockena.Domain.csproj" />
+  </Project>
+</Solution>

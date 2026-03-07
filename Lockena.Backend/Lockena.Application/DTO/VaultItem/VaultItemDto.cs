@@ -1,0 +1,29 @@
+﻿namespace Lockena.Application.DTO.VaultItem
+{
+    public class VaultItemDto
+    {
+        public Guid Id { get; set; }
+        public string EncryptedItemKey { get; set; }
+        public string ItemKeyIv { get; set; }
+
+        public string EncryptedPayload { get; set; }
+        public string PayloadIv { get; set; }
+
+        public string BlindIndex { get; set; }
+
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime UpdatedAtUtc { get; set; }
+
+        public VaultItemDto(Domain.Entities.VaultItem item)
+        {
+            Id = item.Id;
+            EncryptedItemKey = item.EncryptedItemKey;
+            ItemKeyIv = item.ItemKeyIv;
+            EncryptedPayload = item.EncryptedPayload;
+            PayloadIv = item.PayloadIv;
+            BlindIndex = item.BlindIndex;
+            CreatedAtUtc = item.CreatedAtUtc;
+            UpdatedAtUtc = item.UpdatedAtUtc;
+        }
+    }
+}
