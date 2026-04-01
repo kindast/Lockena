@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
 import { toast, Toaster } from "sonner";
 import Dashboard from "./components/Dashboard";
 import PasswordDetail from "./components/PasswordDetail";

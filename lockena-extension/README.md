@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Lockena Browser Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Браузерное расширение для zero-knowledge менеджера паролей **Lockena**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Назначение
 
-## React Compiler
+Расширение предоставляет быстрый и безопасный доступ к вашим сохраненным паролям непосредственно из браузера, обеспечивая автозаполнение и управление записями без необходимости держать открытой основную веб-версию.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Возможности
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Безопасность**: AES-256 (GCM) защита ваших паролей. Вся криптография выполняется локально.
+- **Синхронизация**: Доступ к паролям синхронизируется с вашим аккаунтом Lockena.
+- **Единая авторизация**: Вход осуществляется через [основной веб-сайт](../lockena-frontend/README.md).
+- **Фоновая работа**: Обновление токенов (refresh) и поддержание актуального состояния зашифрованного хранилища (`encryptedVaultItems`) в `chrome.storage.local`.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Архитектура и Аутентификация
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Расширение использует общую с веб-клиентом и мини-аппом архитектуру Zero-Knowledge:
+
+1. **Вход**: Пользователь нажимает "Войти" и перенаправляется на сайт Lockena (`/signin`).
+2. **Сессия**: После успешного входа токены передаются в расширение и сохраняются локально.
+3. **Ключи**: Мастер-пароль запрашивается для разблокировки хранилища и передается в background worker в виде события `UNLOCK_MASTER_KEY`. Он **никогда не сохраняется** на диске.
+4. **Хранилище**: В `chrome.storage.local` хранятся только зашифрованные записи (`encryptedVaultItems`).
+
+---
+
+## Стек
+
+- React + TypeScript
+- Chrome Extensions API (Manifest V3)
+- Vite для сборки
+- Tailwind CSS + Lucide React для UI
+- Axios для взаимодействия с API
+
+---
+
+## Локальный запуск
+
+### Предварительные требования
+
+- Node.js 20+
+- npm или pnpm
+- Браузер на базе Chromium (Google Chrome, Edge, Brave и т.д.)
+
+### Шаги для разработки
+
+1. Перейдите в директорию расширения:
+
+```bash
+cd /Lockena/lockena-extension
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Установите зависимости:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+3. Соберите проект:
+
+```bash
+npm run build
+```
+
+4. Откройте браузер (например, Chrome) и перейдите на страницу расширений `chrome://extensions/`.
+5. Включите **Режим разработчика** (Developer mode) в правом верхнем углу.
+6. Нажмите **Загрузить распакованное расширение** (Load unpacked) и выберите папку `dist`, созданную на шаге 3 внутри `lockena-extension`.
