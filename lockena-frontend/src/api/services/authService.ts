@@ -86,4 +86,32 @@ export const authService = {
       return handleError(error);
     }
   },
+
+  async sendEmailConfirmation(
+    credentials: string,
+  ): Promise<RequestState<MessageDto>> {
+    try {
+      const response = await httpClient.post<MessageDto>(
+        "/auth/send-email-confirmation",
+        { credentials },
+      );
+      return { state: "success", code: response.status, data: response.data };
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async verifyEmail(token: string): Promise<RequestState<MessageDto>> {
+    try {
+      const response = await httpClient.post<MessageDto>(
+        "/auth/confirm-email",
+        {
+          token,
+        },
+      );
+      return { state: "success", code: response.status, data: response.data };
+    } catch (error) {
+      return handleError(error);
+    }
+  },
 };

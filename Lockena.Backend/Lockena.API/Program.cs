@@ -23,6 +23,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IVaultItemRepository, VaultItemRepository>();
+builder.Services.AddScoped<IEmailTokenRepository, EmailTokenRepository>();
 
 //Services
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -32,6 +33,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshService, RefreshService>();
 builder.Services.AddScoped<ITelegramService, TelegramService>();
 builder.Services.AddScoped<ILogoService, LogoDevService>();
+builder.Services.AddScoped<IMailService, ResendService>();
 builder.Services.AddScoped<IVaultService, VaultService>();
 
 //HttpClient And Cache

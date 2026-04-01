@@ -5,6 +5,8 @@
         public required Guid Id { get; set; }
 
         public required string Email { get; set; }
+        
+        public required bool EmailConfirmed { get; set; }
 
         public required string PasswordHash { get; set; }
 

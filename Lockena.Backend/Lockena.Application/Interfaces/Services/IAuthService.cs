@@ -11,5 +11,8 @@ namespace Lockena.Application.Interfaces.Services
         Task<Result<AuthDto>> TelegramSignUpAsync(TelegramSignUpDto request, string fingerprint);
         Task<Result<AuthDto>> TelegramSignInAsync(TelegramSignInDto request, string fingerprint);
         Task<Result<string>> LogoutAsync(Guid userId, string fingerprint);
+        Task<Result<string>> ConfirmEmail(ConfirmEmailDto request);
+        Task<Result<string>> SendEmailConfirmation(SendEmailConfirmation request);
+        Task<Result<string>> TelegramLinkEmail(Guid userId, LinkEmailDto request);
     }
 }

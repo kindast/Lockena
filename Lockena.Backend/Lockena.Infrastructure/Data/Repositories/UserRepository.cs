@@ -48,7 +48,7 @@ namespace Lockena.Infrastructure.Data.Repositories
 
         public async Task<bool> IsEmailExistsAsync(string email)
         {
-            return await _users.AnyAsync(u => u.Email == email);
+            return await _users.AnyAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
         public async Task<User?> GetByTelegramIdAsync(long telegramId)

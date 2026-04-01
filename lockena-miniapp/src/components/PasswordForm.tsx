@@ -3,10 +3,11 @@ import Header from "./Header";
 import InputItem from "./InputItem";
 import ListGroup from "./ListGroup";
 import Page from "./Page";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CategoryPicker from "./CategoryPicker";
 import PasswordGenerator from "./PasswordGenerator";
 import type { PasswordDto } from "../api/dto/vault-item/password.dto";
+import { LoaderCircle, Save, X } from "lucide-react";
 
 const CATEGORIES: string[] = [
   "Личное",
@@ -22,9 +23,10 @@ const PasswordForm = ({
   onCancel,
 }: {
   initialData?: PasswordDto;
-  onSave: (data: PasswordDto) => void;
+  onSave: (data: PasswordDto) => Promise<void>;
   onCancel: () => void;
 }) => {
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<PasswordDto>>({
     serviceName: "",
     login: "",
@@ -38,7 +40,7 @@ const PasswordForm = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(async () => {
     if (!formData.serviceName || !formData.login || !formData.password) {
       toast.error("Пожалуйста, заполните обязательные поля");
       return;
@@ -51,8 +53,10 @@ const PasswordForm = ({
       category: formData.category || "Личное",
       notes: formData.notes || "",
     };
-    onSave(dataToSave);
-  };
+    setIsSaving(true);
+    await onSave(dataToSave);
+    setIsSaving(false);
+  }, [formData, onSave]);
 
   useEffect(() => {
     const loadInitialData = () => {
@@ -74,21 +78,23 @@ const PasswordForm = ({
   return (
     <Page className="z-30 absolute top-0 left-0 w-full bg-[#efeff4] dark:bg-[#000000]">
       <Header
-        title={initialData ? "Редактировать" : "Новый пароль"}
+        title={initialData ? "Редактирование пароля" : "Новый пароль"}
         left={
           <button
             onClick={onCancel}
             className="text-[#4f46e5] dark:text-[#6366f1] text-[17px]"
           >
-            Отмена
+            <X />
           </button>
         }
         right={
           <button
-            onClick={handleSubmit}
+            onClick={() => {
+              if (!isSaving) handleSubmit();
+            }}
             className="text-[#4f46e5] dark:text-[#6366f1] font-bold text-[17px]"
           >
-            Сохранить
+            {isSaving ? <LoaderCircle className="animate-spin" /> : <Save />}
           </button>
         }
       />

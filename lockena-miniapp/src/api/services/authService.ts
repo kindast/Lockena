@@ -15,6 +15,7 @@ export const authService = {
       const crypto = await createProtectedMasterKey(password);
       const data: SignUpDto = {
         initData: initData,
+        password: password,
         encryptedMasterKey: toBase64Url(
           crypto.protectedMasterKey.encryptedMasterKey,
         ),
@@ -60,6 +61,18 @@ export const authService = {
     try {
       const response = await httpClient.post<MessageDto>("/auth/logout");
       useAuthStore.getState().clearAuth();
+      return { state: "success", code: response.status, data: response.data };
+    } catch (error) {
+      return handleError(error);
+    }
+  },
+
+  async linkEmail(email: string): Promise<RequestState<MessageDto>> {
+    try {
+      const response = await httpClient.post<MessageDto>(
+        "/auth/telegram-link-email",
+        { email },
+      );
       return { state: "success", code: response.status, data: response.data };
     } catch (error) {
       return handleError(error);

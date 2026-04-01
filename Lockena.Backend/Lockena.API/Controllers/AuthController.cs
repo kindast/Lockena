@@ -90,6 +90,35 @@ namespace Lockena.API.Controllers
             return Ok(result.Value);
         }
 
+        [Authorize]
+        [HttpPost("telegram-link-email")]
+        public async Task<ActionResult<MessageDto>> TelegramLinkEmail([FromBody] LinkEmailDto request)
+        {
+            var userId = HttpContext.GetUserId();
+            var result = await _authService.TelegramLinkEmail(userId, request);
+            if (!result.IsSuccess || result.Value == null)
+                return StatusCode(result.Status, new ErrorDto(result.Errors ?? [], result.Status));
+            return Ok(new MessageDto(result.Value ?? "Success", 200));
+        }
+
+        [HttpPost("confirm-email")]
+        public async Task<ActionResult<MessageDto>> ConfirmEmail([FromBody]  ConfirmEmailDto request)
+        {
+            var result = await _authService.ConfirmEmail(request);
+            if (!result.IsSuccess || result.Value == null)
+                return StatusCode(result.Status, new ErrorDto(result.Errors ?? [], result.Status));
+            return Ok(new MessageDto(result.Value ?? "Success", 200));
+        }
+
+        [HttpPost("send-email-confirmation")]
+        public async Task<ActionResult<MessageDto>> SendEmailConfirmation([FromBody] SendEmailConfirmation request)
+        {
+            var result = await _authService.SendEmailConfirmation(request);
+            if (!result.IsSuccess || result.Value == null)
+                return StatusCode(result.Status, new ErrorDto(result.Errors ?? [], result.Status));
+            return Ok(new MessageDto(result.Value ?? "Success", 200));
+        }
+
         private void AppendCookie(AuthDto auth)
         {
             var options = new CookieOptions()
@@ -105,6 +134,8 @@ namespace Lockena.API.Controllers
         private string GetFingerprintString()
         {
             IHeaderDictionary headers = Request.Headers;
+            if (headers.Origin.ToString().StartsWith("chrome-extension"))
+                return "extension";
             return $"{headers.UserAgent};{headers.AcceptLanguage};{headers.AcceptEncoding};";
         }
     }

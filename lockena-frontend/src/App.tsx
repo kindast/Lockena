@@ -9,6 +9,8 @@ import MasterPasswordScreen from "./screens/MasterPasswordScreen";
 import { unlockMasterKey } from "./crypto/masterKey";
 import { fromBase64Url } from "./crypto/utils";
 import LandingScreen from "./screens/LandingScreen";
+import { EmailConfirmationScreen } from "./screens/EmailConfirmationScreen";
+import { NotFound } from "./screens/NotFound";
 
 export default function App() {
   const { isAuthenticated, masterKey } = useAuthStore();
@@ -75,9 +77,13 @@ export default function App() {
             )
           }
         />
-
+        <Route
+          path="/email-confirmation/:token"
+          element={<EmailConfirmationScreen />}
+        />
         <Route path="/signin" element={<SignInScreen />} />
         <Route path="/signup" element={<SignUpScreen />} />
+        <Route path="*" element={<NotFound />} />"
       </Routes>
     </>
   );

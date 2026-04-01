@@ -11,11 +11,17 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.3" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
+    <PackageReference Include="Resend" Version="0.2.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.16.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Lockena.Domain\Lockena.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Templates\email.html" />
+    <EmbeddedResource Include="Templates\Email.html" />
   </ItemGroup>
 
 </Project>

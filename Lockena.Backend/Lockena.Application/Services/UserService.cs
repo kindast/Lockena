@@ -32,7 +32,8 @@ namespace Lockena.Application.Services
             var user = new User()
             {
                 Id = Guid.NewGuid(),
-                Email = request.Email,
+                Email = request.Email.ToLower(),
+                EmailConfirmed = false,
                 PasswordHash = passwordHash,
                 Salt = request.Salt,
                 EncryptedMasterKey = request.EncryptedMasterKey,
@@ -40,7 +41,7 @@ namespace Lockena.Application.Services
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
-
+            
             //Добавляем в бд и сохраняем
             await _unitOfWork.Users.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
@@ -52,13 +53,14 @@ namespace Lockena.Application.Services
         {
             //Инициализируем недостающие данные
             var email = $"{(user.Username ?? user.Id.ToString())}@telegram";
-            var passwordHash = _cryptoService.Hash(Guid.NewGuid().ToString(), Base64Converter.FromBase64Url(request.Salt));
+            var passwordHash = _cryptoService.Hash(request.Password, Base64Converter.FromBase64Url(request.Salt));
 
             //Создаём модель
             var newUser = new User()
             {
                 Id = Guid.NewGuid(),
                 Email = email,
+                EmailConfirmed = false,
                 PasswordHash = passwordHash,
                 Salt = request.Salt,
                 EncryptedMasterKey = request.EncryptedMasterKey,

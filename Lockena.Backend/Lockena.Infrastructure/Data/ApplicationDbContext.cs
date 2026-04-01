@@ -9,6 +9,8 @@ namespace Lockena.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<VaultItem> VaultItems { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        
+        public DbSet<EmailToken> EmailTokens { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

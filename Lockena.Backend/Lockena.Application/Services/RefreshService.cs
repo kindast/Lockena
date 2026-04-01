@@ -64,7 +64,7 @@ namespace Lockena.Application.Services
                 return Result<User>.Failure(401);
 
             //Проверяем fingerprint 
-            if (token.FingerPrint != _cryptoService.Hash(fingerprint))
+            if (fingerprint != "extension" && token.FingerPrint != _cryptoService.Hash(fingerprint))
                 return Result<User>.Failure(401);
 
             //Проверяем срок действия

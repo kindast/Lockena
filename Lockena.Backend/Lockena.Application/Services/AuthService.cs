@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Security.Cryptography;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Lockena.Application.Common;
 using Lockena.Application.DTO.Auth;
@@ -7,6 +8,7 @@ using Lockena.Application.Interfaces.Services;
 using Lockena.Domain.Entities;
 using System.Text.Json;
 using System.Web;
+using Lockena.Application.Interfaces.Repository;
 
 namespace Lockena.Application.Services
 {
@@ -18,13 +20,19 @@ namespace Lockena.Application.Services
         private readonly IConfiguration _configuration;
         private readonly ITelegramService _telegramService;
         private readonly JwtSettings _jwtSettings;
+        private readonly IMailService _mailService;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly ICryptoService _cryptoService;
 
         public AuthService(IUserService userService,
             IJwtService jwtService,
             IRefreshService refreshService,
             IConfiguration configuration,
             ITelegramService telegramService, 
-            IOptions<JwtSettings> jwtSettings)
+            IOptions<JwtSettings> jwtSettings,
+            IUnitOfWork unitOfWork,
+            ICryptoService cryptoService,
+            IMailService mailService)
         {
             _userService = userService;
             _jwtService = jwtService;
@@ -32,6 +40,9 @@ namespace Lockena.Application.Services
             _configuration = configuration;
             _telegramService = telegramService;
             _jwtSettings = jwtSettings.Value;
+            _mailService = mailService;
+            _unitOfWork = unitOfWork;
+            _cryptoService = cryptoService;
         }
 
         public async Task<Result<AuthDto>> SignUpAsync(SignUpDto request, string fingerprint)
@@ -47,6 +58,9 @@ namespace Lockena.Application.Services
             //Генерируем refresh token
             var refreshToken = await _refreshService.GenerateAsync(user.Value, 
                 fingerprint, DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenLifetimeDays));
+            
+            //Отправляем письмо с токеном
+            await _mailService.SendEmailAsync(user.Value.Id, user.Value.Email);
 
             //Формируем ответ
             var response = new AuthDto 
@@ -68,6 +82,12 @@ namespace Lockena.Application.Services
             var user = await _userService.GetUserAsync(request.Email, request.Password);
             if (!user.IsSuccess || user.Value == null)
                 return Result<AuthDto>.Failure(user.Status, user.Errors);
+
+            if (!user.Value.EmailConfirmed)
+            {
+                await _mailService.SendEmailAsync(user.Value.Id, user.Value.Email);
+                return Result<AuthDto>.Failure(400, "Проверьте почту: мы отправили вам письмо для подтверждения.");
+            }     
 
             //Генерируем access token
             var accessToken = _jwtService.GenerateJwtToken(user.Value.Id);
@@ -96,7 +116,7 @@ namespace Lockena.Application.Services
             var user = await _refreshService.CompareAsync(refreshToken, fingerprint);
             if (!user.IsSuccess || user.Value == null)
                 return Result<AuthDto>.Failure(user.Status, user.Errors);
-
+            
             //Генерируем access token
             var accessToken = _jwtService.GenerateJwtToken(user.Value.Id);
 
@@ -220,6 +240,41 @@ namespace Lockena.Application.Services
             };
 
             return Result<AuthDto>.Success(response);
+        }
+
+        public async Task<Result<string>> TelegramLinkEmail(Guid userId, LinkEmailDto request)
+        {
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null) return Result<string>.Failure(400, "Не удалось найти пользователя");
+            if (await _unitOfWork.Users.IsEmailExistsAsync(request.Email))
+                return Result<string>.Failure(400, "Данный адрес электронной почты уже занят");
+            var sended = await _mailService.SendEmailAsync(user.Id, request.Email);
+            if (!sended) return Result<string>.Failure(400, $"Не удалось отправить письмо на почту: {user.Email}");
+            return Result<string>.Success("Ссылка для подтверждения почты успешно отправлена");
+        }
+        
+        public async Task<Result<string>> ConfirmEmail(ConfirmEmailDto request)
+        {
+            var verified = await _mailService.VerifyEmailAsync(request.Token);
+            if (!verified) return Result<string>.Failure(400, "К сожалению, не удалось подтвердить ваш адрес электронной почты");
+            return Result<string>.Success("Ваш адрес электронной почты успешно подтвержден");
+        }
+
+        public async Task<Result<string>> SendEmailConfirmation(SendEmailConfirmation request)
+        {
+            User? user = await _unitOfWork.Users.GetByEmailAsync(request.Credentials);
+            if (user == null)
+            {
+                var token = await _unitOfWork.EmailTokens.GetByHashAsync(
+                    _cryptoService.Hash(request.Credentials));
+                if (token == null) return Result<string>.Failure(400, "Не удалось найти пользователя");
+                user = await _unitOfWork.Users.GetByIdAsync(token.UserId);
+            }
+
+            if (user == null) return Result<string>.Failure(400, "Не удалось найти пользователя");
+            var sended = await _mailService.SendEmailAsync(user.Id, user.Email);
+            if (!sended) return Result<string>.Failure(400, $"Не удалось отправить письмо на почту: {user.Email}");
+            return Result<string>.Success("Ссылка для подтверждения почты успешно отправлена");
         }
     }
 }

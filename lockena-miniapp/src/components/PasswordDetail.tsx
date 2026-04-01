@@ -1,4 +1,11 @@
-import { ChevronLeft, Copy, ExternalLink, Eye, EyeOff } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Pencil,
+} from "lucide-react";
 import Button from "./Button";
 import ListGroup from "./ListGroup";
 import Page from "./Page";
@@ -35,8 +42,7 @@ const PasswordDetail = ({
             onClick={onBack}
             className="flex items-center text-[#4f46e5] dark:text-[#6366f1] -ml-1"
           >
-            <ChevronLeft size={24} />
-            <span className="text-[17px]">Назад</span>
+            <ArrowLeft />
           </button>
         }
         right={
@@ -44,7 +50,7 @@ const PasswordDetail = ({
             onClick={onEdit}
             className="text-[#4f46e5] dark:text-[#6366f1] text-[17px]"
           >
-            Редактировать
+            <Pencil size={20} />
           </button>
         }
       />

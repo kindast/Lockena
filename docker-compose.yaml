@@ -17,9 +17,11 @@ services:
       context: ./Lockena.Backend
     environment:
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=lockena;Username=postgres;Password=VeryStrongPassword123!
-      AllowedCorsOrigins: "https://localhost"
+      AllowedCorsOrigins: "https://localhost:5173"
       TelegramBotToken: "BotToken" #Токен из @BotFather для работы Telegram Mini App
       LogoDevApiKey: "ApiKey" #API ключ от сервиса logo.dev для загрузки логотипов
+      ResendApiKey: "Api Key From resend.dev" #API ключ от сервиса resend.dev для отправки почты
+      LinkForEmailConfirmation: "https://localhost:5173/email-confirmation/" #Ссалка для подтверждения почты
       JwtSettings__SecretKey: "VeryVeryVeryStrongJWTKey12345678" #JWT ключ минимум 32 символа
       ASPNETCORE_ENVIRONMENT: Production
     depends_on:
