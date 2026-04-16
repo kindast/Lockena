@@ -1,3 +1,4 @@
+import type { PasswordItem } from "lockena-core";
 import {
   SquareArrowOutUpRight,
   Eye,
@@ -8,10 +9,9 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
-import type { PasswordDto } from "../../api/dto/vault-item/password.dto";
 
 interface TableRowProps {
-  password: PasswordDto;
+  password: PasswordItem;
   onDelete: () => void;
   onEdit: () => void;
 }
@@ -96,15 +96,7 @@ function TableRow({ password, onDelete, onEdit }: TableRowProps) {
           )}
         </div>
       </td>
-      <td className="px-6 py-2">
-        {password.category ? (
-          <div className="bg-blue-100 dark:bg-blue-900 dark:text-blue-400 inline rounded-full px-2 py-1 text-xs text-blue-600">
-            {password.category}
-          </div>
-        ) : (
-          <X className="w-5 h-5 text-red-600" />
-        )}
-      </td>
+
       <td className="px-6 py-2">
         <div className="text-sm text-gray-600 dark:text-gray-300">
           {password.updatedAtUtc &&

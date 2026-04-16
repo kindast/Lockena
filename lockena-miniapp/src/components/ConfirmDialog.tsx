@@ -8,6 +8,7 @@ const ConfirmDialog = ({
   message,
   onConfirm,
   onCancel,
+  requirePassword = false,
   confirmText = "Удалить",
   cancelText = "Отмена",
   confirmVariant = "danger",
@@ -15,18 +16,20 @@ const ConfirmDialog = ({
   isOpen: boolean;
   title: string;
   message: string;
-  onConfirm: () => void | Promise<void>;
+  requirePassword?: boolean;
+  onConfirm: (password?: string) => void | Promise<void>;
   onCancel: () => void;
   confirmText?: string;
   cancelText?: string;
   confirmVariant?: "primary" | "danger";
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
-      await onConfirm();
+      await onConfirm(requirePassword ? password : undefined);
     } finally {
       setIsLoading(false);
     }
@@ -46,7 +49,7 @@ const ConfirmDialog = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="bg-[#f0f0f0] dark:bg-[#2c2c2e] rounded-xl shadow-lg w-full max-w-[270px] text-center"
+            className="bg-[#f0f0f0] dark:bg-[#2c2c2e] rounded-xl shadow-lg w-full max-w-67.5 text-center"
           >
             <div className="p-4 border-b border-[#d1d1d6] dark:border-[#3a3a3c]">
               <h3 className="font-semibold text-black dark:text-white">
@@ -55,11 +58,20 @@ const ConfirmDialog = ({
               <p className="text-xs text-black/60 dark:text-white/60 mt-1">
                 {message}
               </p>
+              {requirePassword && (
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Мастер-пароль"
+                  className="mt-3 w-full text-sm outline-none bg-white dark:bg-[#1c1c1e] text-black dark:text-white rounded-md px-3 py-2 border border-[#d1d1d6] dark:border-[#38383a] focus:border-[#4f46e5] dark:focus:border-[#6366f1] transition-colors"
+                />
+              )}
             </div>
             <div className="flex flex-col">
               <button
                 onClick={handleConfirm}
-                disabled={isLoading}
+                disabled={isLoading || (requirePassword ? !password : false)}
                 className={`py-3 flex justify-center items-center text-center text-sm font-semibold border-b border-[#d1d1d6] dark:border-[#3a3a3c] ${confirmVariant === "danger" ? "text-[#ff3b30]" : "text-[#007aff] dark:text-[#0a84ff]"} active:bg-black/5 dark:active:bg-white/5 transition-colors disabled:opacity-50`}
               >
                 {isLoading ? (

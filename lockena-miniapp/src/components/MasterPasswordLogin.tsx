@@ -4,16 +4,14 @@ import { Eye, EyeOff } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import { useState } from "react";
 import Logo from "./Logo";
-import { unlockMasterKey } from "../crypto/masterKey";
-import { fromBase64Url } from "../crypto/utils";
 import useAuthStore from "../store/authStore";
+import { keyService } from "lockena-core";
 
 const MasterPasswordLogin = ({
   encryptedState,
 }: {
   encryptedState: {
     encryptedMasterKey: string;
-    iv: string;
     salt: string;
   };
 }) => {
@@ -23,12 +21,10 @@ const MasterPasswordLogin = ({
   const handleLogin = async () => {
     if (!encryptedState) return;
     try {
-      const key = await unlockMasterKey(
-        password,
-        fromBase64Url(encryptedState.encryptedMasterKey),
-        fromBase64Url(encryptedState.iv),
-        fromBase64Url(encryptedState.salt),
-      );
+      const key = await keyService.decrypt(password, {
+        encryptedMasterKey: encryptedState.encryptedMasterKey,
+        salt: encryptedState.salt,
+      });
       useAuthStore.getState().setMasterKey(key);
       toast.success("Вход выполнен");
     } catch {

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { toast, Toaster } from "sonner";
 import Button from "./Button";
 import Logo from "./Logo";
-import { authService } from "../api/services/authService";
+import { authService } from "lockena-core";
+import useAuthStore from "../store/authStore";
 
 const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).{8,100}$/;
 
@@ -29,8 +30,9 @@ const MasterPasswordSetup = () => {
       return;
     }
     const tg = window.Telegram.WebApp;
-    const signup = await authService.signUp(tg.initData, password);
+    const signup = await authService.signUpWithTelegram(tg.initData, password);
     if (signup.state === "success") {
+      useAuthStore.getState().setAuth(signup.data);
       toast.success("Аккаунт успешно создан");
     } else {
       toast.error("Ошибка при создании аккаунта");

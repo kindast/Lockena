@@ -1,10 +1,10 @@
+import type { PasswordItem } from "lockena-core";
 import TableRow from "./TableRow";
-import type { PasswordDto } from "../../api/dto/vault-item/password.dto";
 
 interface TableRowProps {
-  passwords: PasswordDto[];
-  onDelete: (password: PasswordDto) => void;
-  onEdit: (password: PasswordDto) => void;
+  passwords: PasswordItem[];
+  onDelete: (password: PasswordItem) => void;
+  onEdit: (password: PasswordItem) => void;
 }
 
 function Table({ passwords, onDelete, onEdit }: TableRowProps) {
@@ -24,9 +24,6 @@ function Table({ passwords, onDelete, onEdit }: TableRowProps) {
             </th>
             <th className="px-6 py-3 text-left text-gray-700 dark:text-gray-300  text-sm">
               URL
-            </th>
-            <th className="px-6 py-3 text-left text-gray-700 dark:text-gray-300  text-sm">
-              Категория
             </th>
             <th className="px-6 py-3 text-left text-gray-700 dark:text-gray-300  text-sm">
               Обновлен

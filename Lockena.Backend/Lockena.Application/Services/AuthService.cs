@@ -70,7 +70,6 @@ namespace Lockena.Application.Services
                 Email = user.Value.Email,
                 EncryptedMasterKey = user.Value.EncryptedMasterKey,
                 Salt = user.Value.Salt,
-                MasterKeyIv = user.Value.MasterKeyIv,
             };
 
             return Result<AuthDto>.Success(response);
@@ -104,7 +103,6 @@ namespace Lockena.Application.Services
                 Email = user.Value.Email,
                 EncryptedMasterKey = user.Value.EncryptedMasterKey,
                 Salt = user.Value.Salt,
-                MasterKeyIv = user.Value.MasterKeyIv,
             };
 
             return Result<AuthDto>.Success(response);
@@ -133,7 +131,6 @@ namespace Lockena.Application.Services
                 Email = user.Value.Email,
                 EncryptedMasterKey = user.Value.EncryptedMasterKey,
                 Salt = user.Value.Salt,
-                MasterKeyIv = user.Value.MasterKeyIv,
             };
 
             return Result<AuthDto>.Success(response);
@@ -191,7 +188,6 @@ namespace Lockena.Application.Services
                 Email = user.Email,
                 EncryptedMasterKey = user.EncryptedMasterKey,
                 Salt = user.Salt,
-                MasterKeyIv = user.MasterKeyIv,
             };
 
             return Result<AuthDto>.Success(response);
@@ -236,7 +232,6 @@ namespace Lockena.Application.Services
                 Email = user.Email,
                 EncryptedMasterKey = user.EncryptedMasterKey,
                 Salt = user.Salt,
-                MasterKeyIv = user.MasterKeyIv,
             };
 
             return Result<AuthDto>.Success(response);

@@ -4,12 +4,9 @@ import AccentButton from "../ui/AccentButton";
 import Button from "../ui/Button";
 import Loading from "../ui/Loading";
 import useAuthStore from "../../store/authStore";
-import type { RequestState } from "../../api/dto/request-state.dto";
-import type { ProfileDto } from "../../api/dto/user/profile.dto";
-import { userService } from "../../api/services/userService";
-import type { ChangePasswordDto } from "../../api/dto/user/change-password.dto";
 import ChangePasswordModal from "../modals/ChangePasswordModal";
 import DeleteModal from "../modals/DeleteModal";
+import { userService, type ProfileDto } from "lockena-core";
 
 function ProfilePage() {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] =
@@ -18,25 +15,24 @@ function ProfilePage() {
     useState<boolean>(false);
   const [passwordConfirm, setPasswordConfirm] = useState<string>("");
   const [errors, setErrors] = useState<string[]>();
-  const [profile, setProfile] = useState<RequestState<ProfileDto>>({
-    state: "loading",
-  });
+  const [profile, setProfile] = useState<ProfileDto>();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const masterKey = useAuthStore((state) => state.masterKey);
 
   const deleteAccount = useCallback(async () => {
-    const result = await userService.deleteAccount({
-      password: passwordConfirm,
-    });
+    const result = await userService.deleteAccount(passwordConfirm);
     if (result.state === "success") useAuthStore.getState().clearAuth();
     if (result.state === "error") setErrors(result.errors);
   }, [passwordConfirm]);
 
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
-      const data: ChangePasswordDto = {
+      if (!masterKey) return;
+      const result = await userService.changePassword(
         currentPassword,
         newPassword,
-      };
-      const result = await userService.changePassword(data);
+        masterKey,
+      );
       if (result.state === "success") setShowChangePasswordModal(false);
       if (result.state === "error") setErrors(result.errors);
     },
@@ -45,15 +41,16 @@ function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setIsLoading(true);
       const result = await userService.getProfile();
-      if (result.state === "success") setProfile(result);
+      if (result.state === "success") setProfile(result.data);
+      setIsLoading(false);
     };
 
     fetchProfile();
   }, []);
 
-  if (profile.state === "loading")
-    return <Loading title="Загрузка профиля..." />;
+  if (isLoading) return <Loading title="Загрузка профиля..." />;
 
   return (
     <div className="px-2 sm:px-6 py-1 sm:py-4 bg-gray-50 dark:bg-gray-900 grow flex  justify-center">
@@ -65,17 +62,13 @@ function ProfilePage() {
           <p className="font-medium text-gray-900 dark:text-white text-lg sm:text-xl">
             Основная информация
           </p>
-          {profile.state === "success" && (
+          {profile && (
             <>
               <div className="flex items-end gap-4">
                 <TextField
                   id="email"
                   label="Email"
-                  value={
-                    profile.state === "success"
-                      ? profile.data.email
-                      : "Загрузка..."
-                  }
+                  value={profile.email ? profile.email : "Загрузка..."}
                   readonly
                   placeholder="user@example.com"
                   type="email"
@@ -95,9 +88,7 @@ function ProfilePage() {
                 value={
                   profile
                     ? new Date(
-                        profile.state === "success"
-                          ? profile.data.createdAt
-                          : "",
+                        profile ? profile.createdAt : "",
                       ).toLocaleDateString()
                     : "Загрузка..."
                 }
@@ -118,7 +109,7 @@ function ProfilePage() {
                 Последнее изменение:{" "}
                 {profile
                   ? new Date(
-                      profile.state === "success" ? profile.data.createdAt : "",
+                      profile ? profile.createdAt : "",
                     ).toLocaleDateString()
                   : "Загрузка..."}
               </p>

@@ -5,9 +5,9 @@ import useAuthStore from "../store/authStore";
 import { Mail } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { authService } from "../api/services/authService";
 import TextField from "../components/ui/TextField";
 import Logo from "../components/ui/Logo";
+import { authService } from "lockena-core";
 
 type SignUpValues = {
   email: string;

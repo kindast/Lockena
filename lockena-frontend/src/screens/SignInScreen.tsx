@@ -2,13 +2,12 @@ import Button from "../components/ui/Button";
 import PasswordField from "../components/ui/PasswordField";
 import TextButton from "../components/ui/TextButton";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { authService } from "../api/services/authService";
 import { useNavigate } from "react-router";
 import { Mail } from "lucide-react";
 import useAuthStore from "../store/authStore";
 import TextField from "../components/ui/TextField";
-import type { SignInDto } from "../api/dto/auth";
 import Logo from "../components/ui/Logo";
+import { authService, keyService } from "lockena-core";
 
 type SignInValues = {
   email: string;
@@ -55,11 +54,17 @@ function SignInScreen() {
   const navigate = useNavigate();
 
   const signIn = useCallback(async () => {
-    const data: SignInDto = {
-      email: values.email,
-      password: values.password,
-    };
-    const response = await authService.signIn(data);
+    const response = await authService.signIn(values.email, values.password);
+    if (response.state === "success") {
+      const masterKey = await keyService.decrypt(values.password, {
+        encryptedMasterKey: response.data.encryptedMasterKey,
+        salt: response.data.salt,
+      });
+      useAuthStore.getState().setAuth(response.data);
+      useAuthStore.getState().setMasterKey(masterKey);
+      navigate("/dashboard");
+    }
+
     if (response.state === "error" && response.code === 400) {
       setRequestErrors(response.errors);
     }

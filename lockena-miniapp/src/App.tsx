@@ -6,17 +6,21 @@ import PasswordDetail from "./components/PasswordDetail";
 import PasswordForm from "./components/PasswordForm";
 import useAuthStore from "./store/authStore";
 import { LoaderCircle, OctagonAlert } from "lucide-react";
-import { authService } from "./api/services/authService";
 import Profile from "./components/Profile";
-import { userService } from "./api/services/userService";
-import type { PasswordDto } from "./api/dto/vault-item/password.dto";
 import MasterPasswordLogin from "./components/MasterPasswordLogin";
 import MasterPasswordSetup from "./components/MasterPasswordSetup";
-import { vaultService } from "./api/services/vaultService";
 import ConfirmDialog from "./components/ConfirmDialog";
-import { encryptVaultItem } from "./crypto/vaultItem";
 import LinkEmailForm from "./components/LinkEmailForm";
 import ChangeMasterPasswordForm from "./components/ChangeMasterPasswordForm";
+import {
+  authService,
+  setupHttpClient,
+  sodiumLoader,
+  userService,
+  vaultCryptoService,
+  vaultService,
+  type PasswordItem,
+} from "lockena-core";
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -27,7 +31,6 @@ export default function App() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [encryptedState, setEncryptedState] = useState<{
     encryptedMasterKey: string;
-    iv: string;
     salt: string;
   }>();
   const masterKey = useAuthStore((s) => s.masterKey);
@@ -45,18 +48,35 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    sodiumLoader.initSodium();
+    setupHttpClient({
+      getToken: () => useAuthStore.getState().auth?.accessToken || null,
+      refreshToken: async () => {
+        const result = await authService.refresh();
+        if (result.state === "success") {
+          useAuthStore.getState().setAuth(result.data);
+          return true;
+        } else if (result.state === "error" && result.code === 401) {
+          useAuthStore.getState().clearAuth();
+        }
+        return false;
+      },
+    });
+  }, []);
+
+  useEffect(() => {
     const signIn = async () => {
       setIsLoading(true);
       let auth = await authService.refresh();
       if (auth.state === "error") {
         const tg = window.Telegram.WebApp;
-        auth = await authService.signIn({ initData: tg.initData });
+        auth = await authService.signInWithTelegram(tg.initData);
       }
 
       if (auth.state === "success") {
+        useAuthStore.getState().setAuth(auth.data);
         setEncryptedState({
           encryptedMasterKey: auth.data.encryptedMasterKey,
-          iv: auth.data.masterKeyIv,
           salt: auth.data.salt,
         });
       }
@@ -71,7 +91,7 @@ export default function App() {
     if (isTelegramReady) signIn();
   }, [isTelegramReady]);
 
-  const [passwords, setPasswords] = useState<PasswordDto[]>([]);
+  const [passwords, setPasswords] = useState<PasswordItem[]>([]);
   const [view, setView] = useState<
     "list" | "detail" | "form" | "profile" | "link-email" | "change-password"
   >("list");
@@ -79,7 +99,8 @@ export default function App() {
     isOpen: boolean;
     title: string;
     message: string;
-    onConfirm: () => void | Promise<void>;
+    requirePassword?: boolean;
+    onConfirm: (password?: string) => void | Promise<void>;
   } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -97,13 +118,21 @@ export default function App() {
 
   const fetchPasswords = useCallback(async () => {
     if (!masterKey) return;
-    const response = await vaultService.getVaultItems({
-      pageSize: 100,
-      page: 1,
-    });
+    const response = await vaultService.getVaultItems();
 
     if (response.state === "success") {
-      setPasswords(response.data.items);
+      let decryptedItems: PasswordItem[] = [];
+      if (masterKey) {
+        decryptedItems = await Promise.all(
+          response.data.items.map(async (item) => {
+            const decrypted = await vaultCryptoService.decrypt(masterKey, item);
+            decrypted.id = item.id;
+            decrypted.updatedAtUtc = item.updatedAtUtc;
+            return decrypted as PasswordItem;
+          }),
+        );
+      }
+      setPasswords(decryptedItems);
     } else {
       toast.error("Ошибка при загрузке паролей");
       console.error("Fetch error:", response);
@@ -111,11 +140,11 @@ export default function App() {
   }, [masterKey]);
 
   const handleSave = useCallback(
-    async (data: PasswordDto) => {
+    async (data: PasswordItem) => {
       if (!masterKey) return;
       if (selectedId && isEditing) {
         // UPDATE
-        const dto = await encryptVaultItem(masterKey, data);
+        const dto = await vaultCryptoService.encrypt(masterKey, data);
         const response = await vaultService.updateVaultItem(selectedId, dto);
         if (response.state === "error") {
           toast.error("Ошибка при обновлении пароля");
@@ -137,7 +166,7 @@ export default function App() {
         }
       } else {
         // ADD
-        const dto = await encryptVaultItem(masterKey, data);
+        const dto = await vaultCryptoService.encrypt(masterKey, data);
         const response = await vaultService.createVaultItem(dto);
         if (response.state === "error") {
           toast.error("Ошибка при сохранении пароля");
@@ -215,14 +244,7 @@ export default function App() {
       return;
     }
 
-    const headers = [
-      "Сервис",
-      "Логин",
-      "Пароль",
-      "Веб-сайт",
-      "Категория",
-      "Заметки",
-    ];
+    const headers = ["Сервис", "Логин", "Пароль", "Веб-сайт", "Заметки"];
 
     const escapeCSV = (field?: string) => {
       if (!field) return '""';
@@ -235,7 +257,6 @@ export default function App() {
         escapeCSV(p.login),
         escapeCSV(p.password),
         escapeCSV(p.url),
-        escapeCSV(p.category),
         escapeCSV(p.notes),
       ].join(","),
     );
@@ -251,15 +272,17 @@ export default function App() {
       isOpen: true,
       title: "Стереть все данные?",
       message: "Это действие удалит ВСЕ ваши пароли и закроет приложение.",
-      onConfirm: async () => {
-        const response = await userService.deleteAccount();
+      requirePassword: true,
+      onConfirm: async (password?: string) => {
+        if (!password) return;
+        const response = await userService.deleteAccount(password);
         if (response.state === "error") {
-          toast.error("Ошибка при удалении данных");
+          toast.error(response.errors || "Ошибка при удалении данных");
           console.error("Account delete error:", response);
         } else {
           window.Telegram?.WebApp.close();
+          setConfirmState(null);
         }
-        setConfirmState(null);
       },
     });
   }, []);
@@ -276,10 +299,12 @@ export default function App() {
 
   const handleChangePassword = useCallback(
     async (currentPass: string, newPass: string) => {
-      const response = await userService.changePassword({
-        currentPassword: currentPass,
-        newPassword: newPass,
-      });
+      if (!masterKey) return;
+      const response = await userService.changePassword(
+        currentPass,
+        newPass,
+        masterKey,
+      );
       if (response.state === "success") {
         toast.success("Мастер-пароль успешно изменён");
         setView("profile");
@@ -368,6 +393,7 @@ export default function App() {
             isOpen={confirmState.isOpen}
             title={confirmState.title}
             message={confirmState.message}
+            requirePassword={confirmState.requirePassword}
             onConfirm={confirmState.onConfirm}
             onCancel={() => setConfirmState(null)}
           />

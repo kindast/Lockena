@@ -8,15 +8,13 @@ import TextField from "../ui/TextField";
 import Checkbox from "../ui/Checkbox";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Range from "../ui/Range";
-import Select from "../ui/Select";
-import type { PasswordDto } from "../../api/dto/vault-item/password.dto";
+import type { PasswordItem } from "lockena-core";
 
 type CreatePasswordValues = {
   serviceName: string;
   url: string;
   login: string;
   password: string;
-  category: string;
   notes: string;
 };
 
@@ -61,9 +59,9 @@ function validate(v: CreatePasswordValues): Errors {
 
 interface PasswordModalProps {
   title: string;
-  initialPassword?: PasswordDto;
+  initialPassword?: PasswordItem;
   onClose: () => void;
-  onSave: (password: PasswordDto) => void;
+  onSave: (password: PasswordItem) => void;
 }
 
 function PasswordModal({
@@ -81,7 +79,6 @@ function PasswordModal({
     url: "",
     login: "",
     password: "",
-    category: "Личное",
     notes: "",
   });
 
@@ -92,7 +89,6 @@ function PasswordModal({
     url: false,
     login: false,
     password: false,
-    category: false,
     notes: false,
   });
 
@@ -134,8 +130,6 @@ function PasswordModal({
           login: initialPassword.login,
           password: initialPassword.password,
           notes: initialPassword.notes || "",
-          category:
-            categories.find((c) => c === initialPassword.category) || "Личное",
         });
       }
     };
@@ -252,17 +246,6 @@ function PasswordModal({
             />
           </div>
         )}
-        <Select
-          label="Категория *"
-          values={categories}
-          selectedValue={values.category}
-          onChange={(c) =>
-            setValues((v) => ({
-              ...v,
-              category: typeof c === "string" ? c : c.label,
-            }))
-          }
-        />
         <TextArea
           id="note"
           label="Примечание"
@@ -280,12 +263,12 @@ function PasswordModal({
           title="Сохранить"
           disabled={Object.keys(errors).length !== 0}
           onClick={() => {
-            const data: PasswordDto = {
+            const data: PasswordItem = {
               ...(initialPassword && { id: initialPassword.id }),
+              type: "password",
               serviceName: values.serviceName,
               login: values.login,
               password: values.password,
-              category: values.category,
               ...(values.notes && { notes: values.notes }),
               ...(values.url && { url: values.url }),
             };

@@ -45,7 +45,7 @@ Infrastructure (EF Core)
 ## Стек
 
 - .NET 10 / ASP.NET Core Web API
-- PostgreSQL 
+- PostgreSQL
 - Entity Framework Core для доступа к данным
 - JWT‑аутентификация + refresh‑токены в HttpOnly cookie
 - Docker + docker‑compose для локального и продакшн‑запуска
@@ -62,10 +62,12 @@ Infrastructure (EF Core)
 ### Хранение данных
 
 Backend хранит:
+
 - Зашифрованные записи
 - Зашифрованный пользовательский ключ
 
 Backend не хранит:
+
 - Производные ключи
 - Расшифрованные данные
 
@@ -73,13 +75,13 @@ Backend не хранит:
 
 ## Конфигурация
 
-| Переменная                           | Назначение                      |
-| ------------------------------------ | ------------------------------- |
-| JwtSettings__SecretKey               | Секрет для подписи JWT          |
-| ConnectionStrings__DefaultConnection | Строка подключения к PostgreSQL |
-| AllowedCorsOrigins | Разрешенные CORS домены через ; (например, `https://localhost:5173`) |
-| TelegramBotToken             | Токен Telegram бота для мини-приложения |
-| LogoDevApiKey | API ключ от сервиса [Logo.dev](https://logo.dev) для логотипов (можно оставить пустым) |
+| Переменная                             | Назначение                                                                             |
+| -------------------------------------- | -------------------------------------------------------------------------------------- |
+| JwtSettings\_\_SecretKey               | Секрет для подписи JWT                                                                 |
+| ConnectionStrings\_\_DefaultConnection | Строка подключения к PostgreSQL                                                        |
+| AllowedCorsOrigins                     | Разрешенные CORS домены через ; (например, `https://localhost:5173`)                   |
+| TelegramBotToken                       | Токен Telegram бота для мини-приложения                                                |
+| LogoDevApiKey                          | API ключ от сервиса [Logo.dev](https://logo.dev) для логотипов (можно оставить пустым) |
 
 ---
 
@@ -94,6 +96,7 @@ dotnet run
 ```
 
 ### Через Docker
+
 ```bash
 docker-compose up backend
 ```

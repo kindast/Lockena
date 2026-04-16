@@ -1,11 +1,9 @@
-import type { AuthDto } from "./api/dto/auth/auth.dto";
-import type { PasswordDto } from "./api/dto/vault-item/password.dto";
-import type { VaultItemDto } from "./api/dto/vault-item/vault-item.dto";
+import type { AuthDto, PasswordItem, VaultItemDto } from "lockena-core";
 
 let sessionData: AuthDto | null = null;
 let masterKey: Uint8Array | null = null;
 let encryptedVaultItems: VaultItemDto[] = [];
-let decryptedVaultItems: PasswordDto[] | null = null;
+let decryptedVaultItems: PasswordItem[] | null = null;
 
 export const getSession = (): AuthDto | null => sessionData;
 export const setSession = (data: AuthDto | null): void => {
@@ -22,9 +20,9 @@ export const setEncryptedVaultItems = (items: VaultItemDto[]): void => {
   encryptedVaultItems = items;
 };
 
-export const getDecryptedVaultItems = (): PasswordDto[] | null =>
+export const getDecryptedVaultItems = (): PasswordItem[] | null =>
   decryptedVaultItems;
-export const setDecryptedVaultItems = (items: PasswordDto[] | null): void => {
+export const setDecryptedVaultItems = (items: PasswordItem[] | null): void => {
   decryptedVaultItems = items;
 };
 

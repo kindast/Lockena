@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CheckCircle2, XCircle, LoaderCircle, Send } from "lucide-react";
 import Logo from "../components/ui/Logo";
 import { useParams } from "react-router";
-import { authService } from "../api/services/authService";
+import { authService } from "lockena-core";
 
 export function EmailConfirmationScreen() {
   const { token } = useParams();
@@ -40,7 +40,7 @@ export function EmailConfirmationScreen() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-100 dark:from-gray-900 dark:via-indigo-950 dark:to-gray-900 transition-colors duration-300">
+    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-white to-indigo-100 dark:from-gray-900 dark:via-indigo-950 dark:to-gray-900 transition-colors duration-300">
       <div className="flex items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 md:p-10 transition-colors duration-300">
@@ -56,7 +56,7 @@ export function EmailConfirmationScreen() {
             {status === "loading" && (
               <>
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center">
+                  <div className="w-20 h-20 bg-linear-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center">
                     <LoaderCircle className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin" />
                   </div>
                 </div>
@@ -74,7 +74,7 @@ export function EmailConfirmationScreen() {
             {status === "sended" && (
               <>
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-20 h-20 bg-linear-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center animate-pulse">
                     <Send className="w-10 h-10 text-indigo-600 dark:text-indigo-400 -ml-1 mt-1" />
                   </div>
                 </div>
@@ -93,7 +93,7 @@ export function EmailConfirmationScreen() {
             {status === "success" && (
               <>
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-20 h-20 bg-linear-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900 dark:to-indigo-800 rounded-full flex items-center justify-center animate-pulse">
                     <CheckCircle2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
                   </div>
                 </div>
@@ -109,7 +109,7 @@ export function EmailConfirmationScreen() {
 
                 <div className="space-y-3">
                   <button
-                    className="cursor-pointer w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="cursor-pointer w-full bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                     onClick={() => (window.location.href = "/dashboard")}
                   >
                     Перейти к приложению
@@ -128,7 +128,7 @@ export function EmailConfirmationScreen() {
             {status === "error" && (
               <>
                 <div className="flex justify-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="w-20 h-20 bg-linear-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800 rounded-full flex items-center justify-center animate-pulse">
                     <XCircle className="w-12 h-12 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
@@ -155,7 +155,7 @@ export function EmailConfirmationScreen() {
 
                 <div className="space-y-3">
                   <button
-                    className="cursor-pointer w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="cursor-pointer w-full bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                     onClick={resendEmail}
                   >
                     Отправить ссылку повторно

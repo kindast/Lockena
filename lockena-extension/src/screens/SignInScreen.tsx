@@ -2,10 +2,11 @@
 import Logo from "../components/Logo";
 import Button from "../components/Button";
 import { useCallback } from "react";
+import { BASE_URL } from "../config";
 
 function SignInScreen() {
   const handleSignIn = useCallback(() => {
-    window.open("https://localhost:5174/signin");
+    window.open(`https://${BASE_URL}/signin`);
   }, []);
 
   return (

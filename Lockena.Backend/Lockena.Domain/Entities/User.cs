@@ -14,8 +14,6 @@
 
         public required string EncryptedMasterKey { get; set; }
 
-        public required string MasterKeyIv { get; set; }
-
         public long? TelegramId { get; set; }
 
         public required DateTime CreatedAtUtc { get; set; }

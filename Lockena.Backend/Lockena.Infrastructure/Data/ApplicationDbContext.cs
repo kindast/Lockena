@@ -20,8 +20,6 @@ namespace Lockena.Infrastructure.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<VaultItem>()
-                .HasIndex(i => i.BlindIndex);
-            modelBuilder.Entity<VaultItem>()
                 .HasIndex(i => i.UserId);
         }
 

@@ -8,16 +8,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import ListGroup from "./ListGroup";
 import Page from "./Page";
 import ServiceIcon from "./ServiceIcon";
 import Header from "./Header";
 import { useState, useRef } from "react";
 import { twMerge } from "tailwind-merge";
 import { clsx, type ClassValue } from "clsx";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
 import Button from "./Button";
 import Logo from "./Logo";
+import type { PasswordItem } from "lockena-core";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -30,7 +29,7 @@ const Dashboard = ({
   onProfile,
   onDeleteMultiple,
 }: {
-  passwords: PasswordDto[];
+  passwords: PasswordItem[];
   onAdd: () => void;
   onSelect: (id: string) => void;
   onProfile: () => void;
@@ -89,13 +88,8 @@ const Dashboard = ({
   const filtered = passwords.filter(
     (p) =>
       p.serviceName.toLowerCase().includes(search.toLowerCase()) ||
-      p.login.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase()),
+      p.login.toLowerCase().includes(search.toLowerCase()),
   );
-
-  const categories = Array.from(
-    new Set(filtered.map((p) => p.category)),
-  ).sort();
 
   return (
     <Page>
@@ -147,7 +141,7 @@ const Dashboard = ({
             Lockena
           </h2>
           <p>Ваш надежный менеджер паролей</p>
-          <Button className="mt-8 w-full max-w-[240px]" onClick={onAdd}>
+          <Button className="mt-8 w-full max-w-60" onClick={onAdd}>
             Добавить пароль
           </Button>
         </div>
@@ -183,54 +177,50 @@ const Dashboard = ({
                 <p>Пароли не найдены</p>
               </div>
             ) : (
-              categories.map((cat) => (
-                <ListGroup key={cat} title={cat}>
-                  {filtered
-                    .filter((p) => p.category === cat)
-                    .map((p, idx, arr) => (
-                      <div
-                        key={p.id}
-                        onPointerDown={() => p.id && startPress(p.id)}
-                        onPointerUp={cancelPress}
-                        onPointerLeave={cancelPress}
-                        onPointerCancel={cancelPress}
-                        onClick={() => p.id && handleClick(p.id)}
-                        className="pl-4 active:bg-[#e5e5ea] dark:active:bg-[#2c2c2e] transition-colors cursor-pointer bg-white dark:bg-[#1c1c1e] select-none"
-                      >
-                        <div
-                          className={cn(
-                            "flex items-center py-2.5 pr-4",
-                            idx !== arr.length - 1 &&
-                              "border-b border-[#c6c6c8] dark:border-[#38383a]",
-                          )}
-                        >
-                          <div className="mr-3">
-                            <ServiceIcon name={p.serviceName} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-[17px] font-semibold text-black dark:text-white  leading-tight">
-                              {p.serviceName}
-                            </h4>
-                            <p className="text-[15px] text-[#8e8e93] truncate">
-                              {p.login}
-                            </p>
-                          </div>
-                          {selectionMode ? (
-                            <div className="mr-4">
-                              {selectedIds.has(p.id!) ? (
-                                <CheckCircle2 className="w-6 h-6 text-[#6366f1]" />
-                              ) : (
-                                <Circle className="w-6 h-6 text-[#c7c7cc] dark:text-[#545458]" />
-                              )}
-                            </div>
+              <>
+                {filtered.map((p, idx, arr) => (
+                  <div
+                    key={p.id}
+                    onPointerDown={() => p.id && startPress(p.id)}
+                    onPointerUp={cancelPress}
+                    onPointerLeave={cancelPress}
+                    onPointerCancel={cancelPress}
+                    onClick={() => p.id && handleClick(p.id)}
+                    className="pl-4 active:bg-[#e5e5ea] dark:active:bg-[#2c2c2e] transition-colors cursor-pointer bg-white dark:bg-[#1c1c1e] select-none"
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center py-2.5 pr-4",
+                        idx !== arr.length - 1 &&
+                          "border-b border-[#c6c6c8] dark:border-[#38383a]",
+                      )}
+                    >
+                      <div className="mr-3">
+                        <ServiceIcon name={p.serviceName} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-[17px] font-semibold text-black dark:text-white  leading-tight">
+                          {p.serviceName}
+                        </h4>
+                        <p className="text-[15px] text-[#8e8e93] truncate">
+                          {p.login}
+                        </p>
+                      </div>
+                      {selectionMode ? (
+                        <div className="mr-4">
+                          {selectedIds.has(p.id!) ? (
+                            <CheckCircle2 className="w-6 h-6 text-[#6366f1]" />
                           ) : (
-                            <ChevronLeft className="w-5 h-5 rotate-180 text-[#c7c7cc] dark:text-[#545458]" />
+                            <Circle className="w-6 h-6 text-[#c7c7cc] dark:text-[#545458]" />
                           )}
                         </div>
-                      </div>
-                    ))}
-                </ListGroup>
-              ))
+                      ) : (
+                        <ChevronLeft className="w-5 h-5 rotate-180 text-[#c7c7cc] dark:text-[#545458]" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         </>

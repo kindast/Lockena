@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Copy, ExternalLink, Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
-import { logoService } from "../../api/services/logoService";
-import type { PasswordDto } from "../../api/dto/vault-item/password.dto";
+import { logoService, type PasswordItem } from "lockena-core";
 
 interface CardProps {
-  password: PasswordDto;
+  password: PasswordItem;
   onDelete: () => void;
   onEdit: () => void;
 }
@@ -19,7 +18,7 @@ function Card({ password, onDelete, onEdit }: CardProps) {
 
   useEffect(() => {
     const fetchLogo = async () => {
-      const response = await logoService.getLogo(password.serviceName);
+      const response = await logoService.get(password.serviceName);
       if (response.state === "success") {
         const url = URL.createObjectURL(response.data);
         setImageUrl(url);
@@ -64,13 +63,6 @@ function Card({ password, onDelete, onEdit }: CardProps) {
           <h3 className="text-xl text-white  font-semibold">
             {password.serviceName}
           </h3>
-          {password.category && (
-            <span
-              className={`inline-flex px-2 py-1 text-xs rounded-full dark:bg-blue-900/30 dark:text-blue-400 bg-blue-100 text-blue-700`}
-            >
-              {password.category}
-            </span>
-          )}
         </div>
       </div>
 

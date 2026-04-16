@@ -5,12 +5,12 @@ import AccentButton from "../components/AccentButton";
 import { useNavigate } from "react-router";
 import { useCallback, useEffect, useState } from "react";
 import { MasterPasswordScreen } from "./MasterPasswordScreen";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
-import { PasswordItem } from "../components/PasswordItem";
 import { PasswordDetailScreen } from "./PasswordDetailScreen";
 import { PasswordFormScreen } from "./PasswordFormScreen";
 import TextField from "../components/TextField";
 import { sendMessage } from "../messages";
+import type { PasswordItem } from "lockena-core";
+import { PasswordCard } from "../components/PasswordCard";
 
 function DashboardScreen() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ function DashboardScreen() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [passwords, setPasswords] = useState<PasswordDto[]>([]);
+  const [passwords, setPasswords] = useState<PasswordItem[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
   const [isEditing, setIsEditing] = useState(false);
@@ -101,7 +101,7 @@ function DashboardScreen() {
   );
 
   const handleSave = useCallback(
-    async (data: PasswordDto) => {
+    async (data: PasswordItem) => {
       try {
         const response = await sendMessage({
           type: "SAVE_VAULT_ITEM",
@@ -234,7 +234,7 @@ function DashboardScreen() {
               onClick={() => setSelectedId(pwd.id)}
               className="cursor-pointer"
             >
-              <PasswordItem
+              <PasswordCard
                 password={pwd}
                 onAutofill={async () => {
                   try {

@@ -26,7 +26,7 @@ namespace Lockena.Application.Services
                 return Result<User>.Failure(400, "Данный email адрес уже занят");
 
             //Хэшируем пароль
-            var passwordHash = _cryptoService.Hash(request.Password, Base64Converter.FromBase64Url(request.Salt));
+            var passwordHash = _cryptoService.Hash(request.Password, Base64Converter.Decode(request.Salt));
 
             //Создаём модель
             var user = new User()
@@ -37,7 +37,6 @@ namespace Lockena.Application.Services
                 PasswordHash = passwordHash,
                 Salt = request.Salt,
                 EncryptedMasterKey = request.EncryptedMasterKey,
-                MasterKeyIv = request.MasterKeyIv,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
@@ -53,7 +52,7 @@ namespace Lockena.Application.Services
         {
             //Инициализируем недостающие данные
             var email = $"{(user.Username ?? user.Id.ToString())}@telegram";
-            var passwordHash = _cryptoService.Hash(request.Password, Base64Converter.FromBase64Url(request.Salt));
+            var passwordHash = _cryptoService.Hash(request.Password, Base64Converter.Decode(request.Salt));
 
             //Создаём модель
             var newUser = new User()
@@ -64,7 +63,6 @@ namespace Lockena.Application.Services
                 PasswordHash = passwordHash,
                 Salt = request.Salt,
                 EncryptedMasterKey = request.EncryptedMasterKey,
-                MasterKeyIv = request.MasterKeyIv,
                 TelegramId = user.Id,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
@@ -86,7 +84,7 @@ namespace Lockena.Application.Services
 
             //Проверяем хэши паролей
             var passwordHash = _cryptoService.Hash(password,
-                            Base64Converter.FromBase64Url(user.Salt));
+                            Base64Converter.Decode(user.Salt));
             if (user.PasswordHash != passwordHash)
                 return Result<User>.Failure(400, "Неверные учётные данные");
 
@@ -112,14 +110,13 @@ namespace Lockena.Application.Services
 
             //Проверка старого пароля
             if (user.PasswordHash != _cryptoService.Hash(request.CurrentPassword,
-                Base64Converter.FromBase64Url(user.Salt)))
+                Base64Converter.Decode(user.Salt)))
                 return Result<string>.Failure(400, "Неверный пароль");
 
             //Хэшируем новый пароль и присваеваем его пользователю
             user.EncryptedMasterKey = request.EncryptedMasterKey;
-            user.MasterKeyIv = request.MasterKeyIv;
             user.Salt = request.Salt;
-            var password = _cryptoService.Hash(request.NewPassword, Base64Converter.FromBase64Url(request.Salt));
+            var password = _cryptoService.Hash(request.NewPassword, Base64Converter.Decode(request.Salt));
             user.PasswordHash = password;
 
             //Обновляем пользователя и сохраняем в бд
@@ -137,8 +134,8 @@ namespace Lockena.Application.Services
                 return Result<string>.Failure(404, "Запрошенный пользователь не найден");
 
             //Проверка пароля
-            if (!user.Email.Contains("@telegram") && user.PasswordHash != _cryptoService.Hash(password,
-                Base64Converter.FromBase64Url(user.Salt)))
+            if (user.PasswordHash != _cryptoService.Hash(password,
+                Base64Converter.Decode(user.Salt)))
                 return Result<string>.Failure(400, "Неверный пароль");
 
             //Удаляем пользователя и сохраняем бд

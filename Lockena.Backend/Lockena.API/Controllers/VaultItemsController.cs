@@ -9,7 +9,7 @@ using Lockena.Domain.Entities;
 
 namespace Lockena.API.Controllers
 {
-    [Route("vault-items")]
+    [Route("api/vault-items")]
     [ApiController]
     public class VaultItemsController : ControllerBase
     {

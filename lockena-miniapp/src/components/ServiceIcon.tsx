@@ -1,12 +1,12 @@
+import { logoService } from "lockena-core";
 import { useEffect, useState } from "react";
-import { logoService } from "../api/services/logoService";
 
 const ServiceIcon = ({ name, size = 10 }: { name: string; size?: number }) => {
   const [error, setError] = useState(false);
   const [image, setImage] = useState<string>("");
   useEffect(() => {
     const fetchLogo = async () => {
-      const response = await logoService.getLogo(name);
+      const response = await logoService.get(name);
       if (response.state === "success") {
         const url = URL.createObjectURL(response.data);
         setImage(url);

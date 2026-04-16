@@ -1,25 +1,26 @@
 import { create } from "zustand";
+import type { AuthDto } from "lockena-core";
 
 type AuthState = {
-  accessToken: string | null;
+  auth: AuthDto | null;
   masterKey: Uint8Array | null;
   isAuthenticated: boolean;
 };
 
 type AuthActions = {
-  setAuth: (token: string) => void;
+  setAuth: (auth: AuthDto) => void;
   setMasterKey: (masterKey: Uint8Array) => void;
   clearAuth: () => void;
 };
 
 const useAuthStore = create<AuthState & AuthActions>((set) => ({
-  accessToken: null,
+  auth: null,
   masterKey: null,
   isAuthenticated: false,
 
-  setAuth: (token) =>
+  setAuth: (auth) =>
     set({
-      accessToken: token,
+      auth,
       isAuthenticated: true,
     }),
 
@@ -31,7 +32,7 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
   clearAuth: () => {
     set({
-      accessToken: null,
+      auth: null,
       masterKey: null,
       isAuthenticated: false,
     });

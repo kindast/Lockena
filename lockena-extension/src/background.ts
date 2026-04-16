@@ -1,11 +1,3 @@
-import { authService } from "./api/services/authService";
-import { fromBase64Url } from "./crypto/utils";
-import { unlockMasterKey } from "./crypto/masterKey";
-import type { VaultItemDto } from "./api/dto/vault-item/vault-item.dto";
-import type { PasswordDto } from "./api/dto/vault-item/password.dto";
-import { vaultService } from "./api/services/vaultService";
-import { logoService } from "./api/services/logoService";
-import { decryptVaultItem, encryptVaultItem } from "./crypto/vaultItem";
 import {
   clearAllSessionState,
   getDecryptedVaultItems,
@@ -17,11 +9,44 @@ import {
   setMasterKey,
   setSession,
 } from "./session";
-import type { AuthDto } from "./api/dto/auth/auth.dto";
-import { userService } from "./api/services/userService";
-import type { ChangePasswordDto } from "./api/dto/user/change-password.dto";
 import type { Message, Response } from "./messages";
-import type { DeleteAccountDto } from "./api/dto/user/delete-account.dto";
+import {
+  authService,
+  keyService,
+  logoService,
+  setupHttpClient,
+  sodiumLoader,
+  userService,
+  vaultCryptoService,
+  vaultService,
+  type AuthDto,
+  type PasswordItem,
+  type VaultItemDto,
+} from "lockena-core";
+
+sodiumLoader.initSodium();
+
+setupHttpClient({
+  getToken: () => getSession()?.accessToken || null,
+  refreshToken: async () => {
+    const result = await authService.refresh();
+    if (result.state === "success") {
+      setSession(result.data);
+      chrome.storage.local.set({ sessionData: result.data });
+      return true;
+    } else if (result.state === "error" && result.code === 401) {
+      clearAllSessionState();
+      chrome.storage.local.remove(["sessionData", "encryptedVaultItems"]);
+      chrome.runtime
+        .sendMessage({
+          type: "AUTH_STATE_CHANGED",
+          authenticated: false,
+        })
+        .catch(() => {});
+    }
+    return false;
+  },
+});
 
 chrome.storage.local.get(
   ["sessionData", "encryptedVaultItems"],
@@ -32,7 +57,11 @@ chrome.storage.local.get(
     setSession(result.sessionData || null);
     setEncryptedVaultItems(result.encryptedVaultItems || []);
     const refreshResult = await authService.refresh();
-    if (refreshResult.state !== "loading" && refreshResult.code === 401) {
+    if (refreshResult.state === "success") {
+      setSession(refreshResult.data);
+      chrome.storage.local.set({ sessionData: refreshResult.data });
+    }
+    if (refreshResult.code === 401) {
       clearAllSessionState();
       chrome.storage.local.remove(["sessionData", "encryptedVaultItems"]);
       chrome.runtime
@@ -83,12 +112,11 @@ chrome.runtime.onMessage.addListener(
           break;
         }
 
-        unlockMasterKey(
-          message.password,
-          fromBase64Url(currentSession.encryptedMasterKey),
-          fromBase64Url(currentSession.masterKeyIv),
-          fromBase64Url(currentSession.salt),
-        )
+        keyService
+          .decrypt(message.password, {
+            encryptedMasterKey: currentSession.encryptedMasterKey,
+            salt: currentSession.salt,
+          })
           .then((key) => {
             setMasterKey(key);
             sendResponse({ type: "MASTER_KEY", payload: getMasterKey() });
@@ -112,7 +140,7 @@ chrome.runtime.onMessage.addListener(
       case "REFRESH": {
         const refresh = async () => {
           const refreshResult = await authService.refresh();
-          if (refreshResult.state !== "loading" && refreshResult.code === 401) {
+          if (refreshResult.code === 401) {
             clearAllSessionState();
             chrome.storage.local.remove(["sessionData", "encryptedVaultItems"]);
             chrome.runtime
@@ -124,6 +152,8 @@ chrome.runtime.onMessage.addListener(
             sendResponse({ type: "ERROR", error: "Сессия истекла" });
           }
           if (refreshResult.state === "success") {
+            setSession(refreshResult.data);
+            chrome.storage.local.set({ sessionData: refreshResult.data });
             sendResponse({ type: "SESSION_DATA", payload: refreshResult.data });
           }
         };
@@ -178,7 +208,7 @@ chrome.runtime.onMessage.addListener(
           }
 
           vaultService
-            .getVaultItems({ page: 1, pageSize: 100 })
+            .getVaultItems()
             .then(async (result) => {
               if (result.state === "success") {
                 setEncryptedVaultItems(result.data.items);
@@ -186,10 +216,13 @@ chrome.runtime.onMessage.addListener(
                   encryptedVaultItems: getEncryptedVaultItems(),
                 });
 
-                const passwords: PasswordDto[] = [];
+                const passwords: PasswordItem[] = [];
                 for (const item of result.data.items) {
                   passwords.push({
-                    ...(await decryptVaultItem(currentMasterKey, item)),
+                    ...((await vaultCryptoService.decrypt(
+                      currentMasterKey,
+                      item,
+                    )) as PasswordItem),
                     id: item.id,
                     updatedAtUtc: item.updatedAtUtc,
                   });
@@ -211,7 +244,7 @@ chrome.runtime.onMessage.addListener(
 
       case "GET_LOGO": {
         logoService
-          .getLogo(message.serviceName)
+          .get(message.serviceName)
           .then((res) => {
             if (res.state === "success") {
               const url = URL.createObjectURL(res.data);
@@ -231,7 +264,8 @@ chrome.runtime.onMessage.addListener(
           break;
         }
 
-        encryptVaultItem(currentMasterKey, message.payload)
+        vaultCryptoService
+          .encrypt(currentMasterKey, message.payload)
           .then(async (encryptedDto) => {
             const response = message.id
               ? await vaultService.updateVaultItem(message.id, encryptedDto)
@@ -282,28 +316,32 @@ chrome.runtime.onMessage.addListener(
       }
 
       case "CHANGE_MASTER_PASSWORD": {
-        const data: ChangePasswordDto = {
-          currentPassword: message.payload.oldPassword,
-          newPassword: message.payload.newPassword,
-        };
-        userService.changePassword(data).then((response) => {
-          if (response.state === "error") {
-            sendResponse({
-              type: "ERROR",
-              error: "Ошибка при изменении пароля",
-            });
-          } else {
-            sendResponse({ type: "MASTER_PASSWORD_CHANGED" });
-          }
-        });
+        const currentMasterKey = getMasterKey();
+        if (!currentMasterKey) {
+          sendResponse({ type: "ERROR", error: "Мастер-ключ не найден" });
+          break;
+        }
+        userService
+          .changePassword(
+            message.payload.oldPassword,
+            message.payload.newPassword,
+            currentMasterKey,
+          )
+          .then((response) => {
+            if (response.state === "error") {
+              sendResponse({
+                type: "ERROR",
+                error: "Ошибка при изменении пароля",
+              });
+            } else {
+              sendResponse({ type: "MASTER_PASSWORD_CHANGED" });
+            }
+          });
         break;
       }
 
       case "DELETE_ACCOUNT": {
-        const data: DeleteAccountDto = {
-          password: message.payload.password,
-        };
-        userService.deleteAccount(data).then((response) => {
+        userService.deleteAccount(message.payload.password).then((response) => {
           if (response.state === "error") {
             sendResponse({
               type: "ERROR",

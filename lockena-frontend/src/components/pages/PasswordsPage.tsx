@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type { RequestState } from "../../api/dto/request-state.dto";
-import { vaultService } from "../../api/services/vaultService";
 import type { PaginationValues } from "../password/Pagination";
-import type { GetVaultItemsDto } from "../../api/dto/vault-item/get-vault-items.dto";
 import type { ParamsHeaderValues } from "../password/ParamsHeader";
-import type { PasswordDto } from "../../api/dto/vault-item/password.dto";
 import Pagination from "../password/Pagination";
 import Card from "../password/Card";
 import { Plus, SearchAlert } from "lucide-react";
@@ -14,20 +10,20 @@ import Button from "../ui/Button";
 import Table from "../password/Table";
 import { useModal } from "../../hooks/useModal";
 import useAuthStore from "../../store/authStore";
-import { encryptVaultItem } from "../../crypto/vaultItem";
 import PasswordModal from "../modals/PasswordModal";
 import DeleteModal from "../modals/DeleteModal";
+import {
+  vaultCryptoService,
+  vaultService,
+  type PasswordItem,
+} from "lockena-core";
 
-interface PasswordsPageProps {
-  category: string;
-  onChangeCategories: (categories: string[]) => void;
-}
-
-function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
-  const [passwords, setPasswords] = useState<
-    RequestState<GetVaultItemsDto<PasswordDto>>
-  >({ state: "loading" });
-  const [filteredPasswords, setFilteredPasswords] = useState<PasswordDto[]>([]);
+function PasswordsPage() {
+  const [passwords, setPasswords] = useState<PasswordItem[]>();
+  const [filteredPasswords, setFilteredPasswords] = useState<PasswordItem[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [pagination, setPagination] = useState<PaginationValues>({
     page: 1,
     pageSize: 8,
@@ -43,12 +39,23 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   const masterKey = useAuthStore((s) => s.masterKey);
 
   const fetchPasswords = useCallback(async () => {
-    setPasswords({ state: "loading" });
-    const result = await vaultService.getVaultItems({
-      page: 1,
-      pageSize: 100,
-    });
-    setPasswords(result);
+    setIsLoading(true);
+    const result = await vaultService.getVaultItems();
+    if (result.state === "success") {
+      let decryptedItems: PasswordItem[] = [];
+      if (masterKey) {
+        decryptedItems = await Promise.all(
+          result.data.items.map(async (item) => {
+            const decrypted = await vaultCryptoService.decrypt(masterKey, item);
+            decrypted.id = item.id;
+            decrypted.updatedAtUtc = item.updatedAtUtc;
+            return decrypted as PasswordItem;
+          }),
+        );
+      }
+      setPasswords(decryptedItems);
+    }
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -58,26 +65,18 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   }, [fetchPasswords]);
 
   const addPassword = useCallback(
-    async (password: PasswordDto) => {
+    async (password: PasswordItem) => {
       if (!masterKey) return;
-      const dto = await encryptVaultItem(masterKey, password);
+      const dto = await vaultCryptoService.encrypt(masterKey, password);
       const result = await vaultService.createVaultItem(dto);
-      if (result.state === "success" && passwords.state === "success") {
-        const filter = [...passwords.data.items];
+      if (result.state === "success" && passwords) {
+        const filter = [...passwords];
         filter.push({
           id: result.data.id,
           ...password,
           updatedAtUtc: result.data.updatedAtUtc,
         });
-        setPasswords((prev) => ({
-          ...prev,
-          data: {
-            items: filter,
-            page: 1,
-            pageSize: 100,
-            total: filter.length,
-          },
-        }));
+        setPasswords(filter);
         hideModal();
       }
     },
@@ -85,26 +84,18 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   );
 
   const editPassword = useCallback(
-    async (id: string, password: PasswordDto) => {
+    async (id: string, password: PasswordItem) => {
       if (!masterKey) return;
-      const dto = await encryptVaultItem(masterKey, password);
+      const dto = await vaultCryptoService.encrypt(masterKey, password);
       const result = await vaultService.updateVaultItem(id, dto);
-      if (result.state === "success" && passwords.state === "success") {
-        const filter = passwords.data.items.filter((p) => p.id !== id);
+      if (result.state === "success" && passwords) {
+        const filter = passwords.filter((p) => p.id !== id);
         filter.push({
           id: result.data.id,
           ...password,
           updatedAtUtc: result.data.updatedAtUtc,
         });
-        setPasswords((prev) => ({
-          ...prev,
-          data: {
-            items: filter,
-            page: 1,
-            pageSize: 100,
-            total: filter.length,
-          },
-        }));
+        setPasswords(filter);
         hideModal();
       }
     },
@@ -114,31 +105,23 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   const deletePassword = useCallback(
     async (id: string) => {
       const result = await vaultService.deleteVaultItem(id);
-      if (result.state === "success" && passwords.state === "success") {
-        const filter = passwords.data.items.filter((p) => p.id !== id);
-        setPasswords((prev) => ({
-          ...prev,
-          data: {
-            items: filter,
-            page: 1,
-            pageSize: 100,
-            total: filter.length,
-          },
-        }));
+      if (result.state === "success" && passwords) {
+        const filter = passwords.filter((p) => p.id !== id);
+        setPasswords(filter);
       }
     },
     [passwords],
   );
 
   const handleOpenPasswordModal = useCallback(
-    (passwordEdit?: PasswordDto) => {
+    (passwordEdit?: PasswordItem) => {
       showModal(
         <PasswordModal
           title={passwordEdit ? "Редактировать пароль" : "Добавить пароль"}
           onClose={() => {
             hideModal();
           }}
-          onSave={(password: PasswordDto) => {
+          onSave={(password: PasswordItem) => {
             if (!passwordEdit) addPassword(password);
             if (passwordEdit)
               editPassword(password.id ?? passwordEdit.id ?? "", password);
@@ -151,7 +134,7 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   );
 
   const handleOpenDeleteModal = useCallback(
-    (password: PasswordDto) => {
+    (password: PasswordItem) => {
       showModal(
         <DeleteModal
           title="Удалить пароль"
@@ -170,11 +153,11 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
   );
 
   useEffect(() => {
-    if (passwords.state !== "success") return;
+    if (!passwords) return;
     const delay = filterParams.search ? 300 : 0;
 
     const handler = setTimeout(() => {
-      let filtered = [...passwords.data.items];
+      let filtered = [...passwords];
       if (filterParams.search) {
         filtered = filtered.filter((v) =>
           v.serviceName
@@ -210,28 +193,14 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
           }
           break;
       }
-      if (category !== "Все пароли")
-        filtered = filtered.filter((p) => p.category === category);
       setFilteredPasswords(filtered);
       setPagination((prev) => ({ ...prev, page: 1, total: filtered.length }));
     }, delay);
 
     return () => clearTimeout(handler);
-  }, [category, passwords, filterParams]);
+  }, [passwords, filterParams]);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      if (passwords.state !== "success") return;
-      const cats = Array.from(
-        new Set(passwords.data.items.map((p) => p.category)),
-      ).sort();
-      cats.unshift("Все пароли");
-      onChangeCategories(cats);
-    };
-    loadCategories();
-  }, [onChangeCategories, passwords]);
-
-  const loadPage = useCallback((): PasswordDto[] => {
+  const loadPage = useCallback((): PasswordItem[] => {
     const lastItemIndex = pagination.page * pagination.pageSize;
     const firstItemIndex = lastItemIndex - pagination.pageSize;
     const pageItems = filteredPasswords.slice(firstItemIndex, lastItemIndex);
@@ -240,7 +209,7 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
 
   return (
     <>
-      {passwords.state === "success" && passwords.data.items.length === 0 ? (
+      {passwords && passwords.length === 0 ? (
         <div className="flex flex-1 flex-col justify-center items-center p-6 bg-gray-50 dark:bg-gray-900">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 w-1/3 p-6">
             <p className="text-gray-900 dark:text-white text-xl font-medium">
@@ -269,10 +238,8 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
             values={filterParams}
             onChange={setFilterParams}
           />
-          {passwords.state === "loading" && (
-            <Loading title="Загрузка паролей..." />
-          )}
-          {passwords.state === "success" &&
+          {isLoading && <Loading title="Загрузка паролей..." />}
+          {passwords &&
             filteredPasswords &&
             filteredPasswords.length === 0 &&
             filterParams.search && (
@@ -289,7 +256,7 @@ function PasswordsPage({ category, onChangeCategories }: PasswordsPageProps) {
                 </div>
               </div>
             )}
-          {passwords.state === "success" &&
+          {passwords &&
             filteredPasswords &&
             filteredPasswords?.length !== 0 && (
               <>

@@ -16,17 +16,9 @@ namespace Lockena.Application.DTO.User
         public string NewPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ключ обязателен")]
-        [Base64Url]
         public required string EncryptedMasterKey { get; init; }
 
         [Required(ErrorMessage = "Соль обязательна")]
-        [Base64Url]
-        [Base64UrlLength(16)]
         public required string Salt { get; init; }
-
-        [Required(ErrorMessage = "IV обязателен")]
-        [Base64Url]
-        [Base64UrlLength(12)]
-        public required string MasterKeyIv { get; init; }
     }
 }

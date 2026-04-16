@@ -2,20 +2,16 @@ import { X, Settings } from "lucide-react";
 import Logo from "./Logo";
 
 interface SideBarProps {
-  category: string;
-  categories: string[];
   showSettings: boolean;
-  onCategory: (cat: string) => void;
+  onPasswords: () => void;
   onSettings: (b: boolean) => void;
   onClose: () => void;
 }
 
 function SideBar({
-  category,
-  categories,
   showSettings,
   onSettings,
-  onCategory,
+  onPasswords,
   onClose,
 }: SideBarProps) {
   return (
@@ -38,23 +34,20 @@ function SideBar({
       </div>
 
       <div className="p-4 space-y-1 border-b border-gray-200 dark:border-gray-700 select-none">
-        {categories.map((cat) => (
-          <div
-            key={cat}
-            className={
-              category === cat && !showSettings
-                ? "text-indigo-600 bg-indigo-50 dark:bg-gray-700 dark:text-gray-300 cursor-pointer px-4 py-2 font-medium rounded-lg"
-                : "text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300 cursor-pointer px-4 py-2 font-medium rounded-lg"
-            }
-            onClick={() => {
-              onSettings(false);
-              onCategory(cat);
-              onClose();
-            }}
-          >
-            {cat}
-          </div>
-        ))}
+        <div
+          className={
+            !showSettings
+              ? "text-indigo-600 bg-indigo-50 dark:bg-gray-700 dark:text-gray-300 cursor-pointer px-4 py-2 font-medium rounded-lg"
+              : "text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 dark:text-gray-300 cursor-pointer px-4 py-2 font-medium rounded-lg"
+          }
+          onClick={() => {
+            onSettings(false);
+            onPasswords();
+            onClose();
+          }}
+        >
+          Все пароли
+        </div>
       </div>
 
       <div className="p-4 select-none">

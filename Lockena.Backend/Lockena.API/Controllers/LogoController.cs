@@ -6,7 +6,7 @@ using Lockena.Application.Interfaces.Services;
 namespace Lockena.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class LogoController : ControllerBase
     {
         private readonly ILogoService _logoService;

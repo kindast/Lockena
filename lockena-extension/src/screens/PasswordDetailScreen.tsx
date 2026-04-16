@@ -8,12 +8,12 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
 import { useCallback, useState } from "react";
 import { ServiceIcon } from "../components/ServiceIcon";
+import type { PasswordItem } from "lockena-core";
 
 interface PasswordDetailScreenProps {
-  password: PasswordDto;
+  password: PasswordItem;
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -78,9 +78,6 @@ export function PasswordDetailScreen({
             className="w-16 h-16 rounded-lg"
           />
           <h2 className="mt-4 text-xl font-bold">{password.serviceName}</h2>
-          {password.category && (
-            <p className="text-sm text-gray-500">{password.category}</p>
-          )}
         </div>
 
         {/* Details */}

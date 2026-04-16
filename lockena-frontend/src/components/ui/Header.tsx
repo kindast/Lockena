@@ -1,6 +1,6 @@
+import { authService } from "lockena-core";
 import { ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { useState } from "react";
-import { authService } from "../../api/services/authService";
 
 interface HeaderProps {
   email: string;

@@ -1,18 +1,5 @@
 /// <reference types="chrome"/>
 
-window.addEventListener("message", (event) => {
-  if (event.origin !== "https://localhost:5173") return;
-
-  if (event.source !== window) return;
-
-  if (event.data?.type === "LOCKENA_EXTENSION_LOGIN") {
-    chrome.runtime.sendMessage({
-      type: "STORE_SESSION",
-      payload: event.data.payload,
-    });
-  }
-});
-
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "AUTOFILL_CREDENTIALS") {
     const { login, password } = message.payload;

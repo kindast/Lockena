@@ -10,17 +10,12 @@ using Lockena.Application.Interfaces.Services;
 namespace Lockena.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
-    public class AuthController : ControllerBase
+    [Route("api/[controller]")]
+    public class AuthController(IAuthService authService, IOptions<JwtSettings> jwtSettings)
+        : ControllerBase
     {
-        private readonly IAuthService _authService;
-        private readonly JwtSettings _jwtSettings;
-
-        public AuthController(IAuthService authService, IOptions<JwtSettings> jwtSettings)
-        {
-            _authService = authService;
-            _jwtSettings = jwtSettings.Value;
-        }
+        private readonly IAuthService _authService = authService;
+        private readonly JwtSettings _jwtSettings = jwtSettings.Value;
 
         [HttpPost("signUp")]
         public async Task<ActionResult<AuthDto>> SignUp([FromBody] SignUpDto request)

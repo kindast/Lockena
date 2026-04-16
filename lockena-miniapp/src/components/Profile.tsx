@@ -11,8 +11,7 @@ import ListGroup from "./ListGroup";
 import Page from "./Page";
 import Header from "./Header";
 import { useEffect, useState } from "react";
-import type { ProfileDto } from "../api/dto/user/profile.dto";
-import { userService } from "../api/services/userService";
+import { userService, type ProfileDto } from "lockena-core";
 
 const Profile = ({
   onBack,

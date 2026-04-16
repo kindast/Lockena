@@ -4,35 +4,48 @@ import SignInScreen from "./screens/SignInScreen";
 import SignUpScreen from "./screens/SignUpScreen";
 import { useCallback, useEffect, useState } from "react";
 import useAuthStore from "./store/authStore";
-import { authService } from "./api/services/authService";
 import MasterPasswordScreen from "./screens/MasterPasswordScreen";
-import { unlockMasterKey } from "./crypto/masterKey";
-import { fromBase64Url } from "./crypto/utils";
 import LandingScreen from "./screens/LandingScreen";
 import { EmailConfirmationScreen } from "./screens/EmailConfirmationScreen";
 import { NotFound } from "./screens/NotFound";
+import {
+  authService,
+  keyService,
+  setupHttpClient,
+  sodiumLoader,
+} from "lockena-core";
 
 export default function App() {
   const { isAuthenticated, masterKey } = useAuthStore();
-  const [encryptedState, setEncryptedState] = useState<{
-    encryptedMasterKey: string;
-    iv: string;
-    salt: string;
-  }>();
   const [error, setError] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    sodiumLoader.initSodium();
+    setupHttpClient({
+      getToken: () => useAuthStore.getState().auth?.accessToken || null,
+      refreshToken: async () => {
+        const result = await authService.refresh();
+        if (result.state === "success") {
+          useAuthStore.getState().setAuth(result.data);
+          return true;
+        } else if (result.state === "error" && result.code === 401) {
+          useAuthStore.getState().clearAuth();
+          navigate("/signin");
+        }
+        return false;
+      },
+    });
+  }, []);
+
+  useEffect(() => {
     const authorize = async () => {
       const result = await authService.refresh();
-      if (result.state === "success")
-        setEncryptedState({
-          encryptedMasterKey: result.data.encryptedMasterKey,
-          iv: result.data.masterKeyIv,
-          salt: result.data.salt,
-        });
+      if (result.state === "success") {
+        useAuthStore.getState().setAuth(result.data);
+      }
       if (result.state === "error") {
         navigate("/signin");
       }
@@ -42,19 +55,18 @@ export default function App() {
   }, [isAuthenticated, location.pathname, navigate]);
 
   const decryptMasterKey = useCallback(async () => {
-    if (!encryptedState) return;
     try {
-      const key = await unlockMasterKey(
-        password,
-        fromBase64Url(encryptedState.encryptedMasterKey),
-        fromBase64Url(encryptedState.iv),
-        fromBase64Url(encryptedState.salt),
-      );
+      const auth = useAuthStore.getState().auth;
+      if (!auth) return;
+      const key = await keyService.decrypt(password, {
+        encryptedMasterKey: auth.encryptedMasterKey,
+        salt: auth.salt,
+      });
       useAuthStore.getState().setMasterKey(key);
     } catch {
       setError("Неверный мастер-пароль");
     }
-  }, [password, encryptedState]);
+  }, [password]);
 
   return (
     <>

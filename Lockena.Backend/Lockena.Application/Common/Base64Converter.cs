@@ -6,7 +6,7 @@ namespace Lockena.Application.Common
 {
     public static class Base64Converter
     {
-        public static byte[] FromBase64Url(string base64Url)
+        public static byte[] Decode(string base64Url)
         {
             // Заменяем URL‑безопасные символы на обычные
             string base64 = base64Url.Replace('-', '+').Replace('_', '/');

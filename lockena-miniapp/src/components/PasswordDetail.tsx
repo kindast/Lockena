@@ -13,7 +13,7 @@ import ServiceIcon from "./ServiceIcon";
 import Header from "./Header";
 import { toast } from "sonner";
 import { useState } from "react";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
+import type { PasswordItem } from "lockena-core";
 
 const PasswordDetail = ({
   entry,
@@ -21,7 +21,7 @@ const PasswordDetail = ({
   onEdit,
   onDelete,
 }: {
-  entry: PasswordDto;
+  entry: PasswordItem;
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -60,7 +60,6 @@ const PasswordDetail = ({
         <h2 className="mt-4 text-2xl font-bold dark:text-white">
           {entry.serviceName}
         </h2>
-        <p className="text-[#8e8e93]">{entry.category}</p>
       </div>
 
       <ListGroup>

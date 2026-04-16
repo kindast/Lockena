@@ -17,7 +17,7 @@ namespace Lockena.Application.Services
             var items = await _unitOfWork.VaultItems.GetAsync(userId);
 
             //Пагинация
-            int pageSize = Math.Clamp(request.PageSize, 1, 100);
+            int pageSize = Math.Clamp(request.PageSize, 1, 1000);
             var itemsDto = 
                 items
                 .Select(i => new VaultItemDto(i))
@@ -25,14 +25,6 @@ namespace Lockena.Application.Services
                 .Skip((request.Page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
-
-            if (!string.IsNullOrEmpty(request.Search))
-                itemsDto = itemsDto
-                    .Where(i => i.BlindIndex == request.Search)
-                    .ToList();
-
-            if (itemsDto.Count == 0 && !string.IsNullOrEmpty(request.Search))
-                return Result<GetVaultItemsDto>.Failure(404, "По вашему запросу пароли не найдены");
 
             var response = new GetVaultItemsDto()
             {
@@ -57,18 +49,15 @@ namespace Lockena.Application.Services
         public async Task<Result<VaultItemDto>> CreateAsync(Guid userId, CreateVaultItemDto request)
         {
             var count = await _unitOfWork.VaultItems.GetCountAsync(userId);
-            if (count == 100)
-                return Result<VaultItemDto>.Failure(403, "Достигнут лимит в 100 записей");
+            if (count == 1000)
+                return Result<VaultItemDto>.Failure(403, "Достигнут лимит в 1000 записей");
 
             var item = new VaultItem
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 EncryptedItemKey = request.EncryptedItemKey,
-                ItemKeyIv = request.ItemKeyIv,
                 EncryptedPayload = request.EncryptedPayload,
-                PayloadIv = request.PayloadIv,
-                BlindIndex = request.BlindIndex,
                 CreatedAtUtc = DateTime.UtcNow,
                 UpdatedAtUtc = DateTime.UtcNow,
             };
@@ -96,10 +85,7 @@ namespace Lockena.Application.Services
 
             item.UpdatedAtUtc = DateTime.UtcNow;
             item.EncryptedItemKey = request.EncryptedItemKey;
-            item.ItemKeyIv = request.ItemKeyIv;
             item.EncryptedPayload = request.EncryptedPayload;
-            item.PayloadIv = request.PayloadIv;
-            item.BlindIndex = request.BlindIndex;
 
             await _unitOfWork.SaveChangesAsync();
 

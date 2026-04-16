@@ -4,39 +4,29 @@ import InputItem from "./InputItem";
 import ListGroup from "./ListGroup";
 import Page from "./Page";
 import { useCallback, useEffect, useState } from "react";
-import CategoryPicker from "./CategoryPicker";
 import PasswordGenerator from "./PasswordGenerator";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
 import { LoaderCircle, Save, X } from "lucide-react";
-
-const CATEGORIES: string[] = [
-  "Личное",
-  "Работа",
-  "Финансы",
-  "Соцсети",
-  "Другое",
-];
+import type { PasswordItem } from "lockena-core";
 
 const PasswordForm = ({
   initialData,
   onSave,
   onCancel,
 }: {
-  initialData?: PasswordDto;
-  onSave: (data: PasswordDto) => Promise<void>;
+  initialData?: PasswordItem;
+  onSave: (data: PasswordItem) => Promise<void>;
   onCancel: () => void;
 }) => {
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState<Partial<PasswordDto>>({
+  const [formData, setFormData] = useState<Partial<PasswordItem>>({
     serviceName: "",
     login: "",
     password: "",
     url: "",
-    category: "",
     notes: "",
   });
 
-  const handleChange = (field: keyof PasswordDto, value: string) => {
+  const handleChange = (field: keyof PasswordItem, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -45,12 +35,12 @@ const PasswordForm = ({
       toast.error("Пожалуйста, заполните обязательные поля");
       return;
     }
-    const dataToSave: PasswordDto = {
+    const dataToSave: PasswordItem = {
+      type: "password",
       serviceName: formData.serviceName!,
       login: formData.login!,
       password: formData.password!,
       url: formData.url || "",
-      category: formData.category || "Личное",
       notes: formData.notes || "",
     };
     setIsSaving(true);
@@ -66,8 +56,6 @@ const PasswordForm = ({
           login: initialData.login,
           password: initialData.password,
           url: initialData.url,
-          category:
-            CATEGORIES.find((c) => c === initialData.category) || "Личное",
           notes: initialData.notes,
         });
       }
@@ -140,14 +128,6 @@ const PasswordForm = ({
               value={formData.url || ""}
               onChange={(v) => handleChange("url", v)}
               placeholder="https://example.com"
-            />
-          </div>
-          <div className="border-b border-[#c6c6c8] dark:border-[#38383a] ">
-            <CategoryPicker
-              label="Категория"
-              value={formData.category || "Личное"}
-              onChange={(v) => handleChange("category", v)}
-              options={CATEGORIES}
             />
           </div>
         </ListGroup>

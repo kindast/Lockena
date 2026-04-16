@@ -9,7 +9,7 @@ interface TextButtonProps {
 
 function TextButton({ label, icon, className, onClick }: TextButtonProps) {
   return (
-    <p className={className}>
+    <span className={className}>
       <button
         className="font-medium  text-indigo-600 hover:text-indigo-700 cursor-pointer flex items-center"
         onClick={onClick}
@@ -17,7 +17,7 @@ function TextButton({ label, icon, className, onClick }: TextButtonProps) {
         {icon && cloneElement(icon, { className: "w-4 h-4 inline mr-1" })}
         {label}
       </button>
-    </p>
+    </span>
   );
 }
 

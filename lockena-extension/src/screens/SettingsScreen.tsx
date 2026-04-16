@@ -103,14 +103,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           return;
         }
 
-        const headers = [
-          "Сервис",
-          "Логин",
-          "Пароль",
-          "Веб-сайт",
-          "Категория",
-          "Заметки",
-        ];
+        const headers = ["Сервис", "Логин", "Пароль", "Веб-сайт", "Заметки"];
 
         const escapeCSV = (field?: string) => {
           if (!field) return '""';
@@ -123,7 +116,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             escapeCSV(p.login),
             escapeCSV(p.password),
             escapeCSV(p.url),
-            escapeCSV(p.category),
             escapeCSV(p.notes),
           ].join(","),
         );

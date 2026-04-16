@@ -1,17 +1,9 @@
+import type { PasswordItem } from "lockena-core";
 import { useEffect, useState } from "react";
-import type { PasswordDto } from "../api/dto/vault-item/password.dto";
-
-const CATEGORIES: string[] = [
-  "Личное",
-  "Работа",
-  "Финансы",
-  "Соцсети",
-  "Другое",
-];
 
 interface PasswordFormScreenProps {
-  initialData?: PasswordDto;
-  onSave: (data: PasswordDto) => void;
+  initialData?: PasswordItem;
+  onSave: (data: PasswordItem) => void;
   onCancel: () => void;
 }
 
@@ -21,12 +13,11 @@ export function PasswordFormScreen({
   onCancel,
 }: PasswordFormScreenProps) {
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<PasswordDto>>({
+  const [formData, setFormData] = useState<Partial<PasswordItem>>({
     serviceName: "",
     login: "",
     password: "",
     url: "",
-    category: "Личное",
     notes: "",
   });
 
@@ -38,8 +29,6 @@ export function PasswordFormScreen({
           login: initialData.login,
           password: initialData.password,
           url: initialData.url,
-          category:
-            CATEGORIES.find((c) => c === initialData.category) || "Личное",
           notes: initialData.notes,
         });
       }
@@ -47,7 +36,7 @@ export function PasswordFormScreen({
     initData();
   }, [initialData]);
 
-  const handleChange = (field: keyof PasswordDto, value: string) => {
+  const handleChange = (field: keyof PasswordItem, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (error) setError(null);
   };
@@ -63,9 +52,8 @@ export function PasswordFormScreen({
       login: formData.login!,
       password: formData.password!,
       url: formData.url || "",
-      category: formData.category || "Личное",
       notes: formData.notes || "",
-    } as PasswordDto);
+    } as PasswordItem);
   };
 
   return (
@@ -146,22 +134,6 @@ export function PasswordFormScreen({
               placeholder="https://example.com"
               className="w-full text-sm outline-none bg-transparent placeholder:text-gray-300 text-[#4F39F6]"
             />
-          </div>
-          <div className="p-3 border-b border-gray-100">
-            <label className="block text-xs font-medium text-gray-500 mb-1">
-              Категория
-            </label>
-            <select
-              value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
-              className="w-full text-sm outline-none bg-transparent appearance-none text-gray-900 cursor-pointer"
-            >
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 

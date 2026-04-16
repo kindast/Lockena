@@ -9,6 +9,7 @@ Telegram WebApp клиент для Lockena.
 Telegram WebApp
 
 Ограничения:
+
 - Работает внутри Telegram
 - Использует initData для первичной аутентификации
 
@@ -71,4 +72,4 @@ pnpm install
 npm run dev
 ```
 
-Открыть приложение в браузере (обычно https://localhost:5173)
+Открыть приложение в браузере (обычно <https://localhost:5173>)

@@ -7,9 +7,7 @@ import SideBar from "../components/ui/SideBar";
 import ModalProvider from "../components/ModalProvider";
 
 function DashboardScreen() {
-  const [category, setCategory] = useState<string>("Все пароли");
-  const [categories, setCategories] = useState<string[]>([]);
-  const email = useAuthStore((s) => s.email);
+  const email = useAuthStore((s) => s.auth?.email);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showSideBar, setShowSideBar] = useState<boolean>(false);
@@ -24,10 +22,8 @@ function DashboardScreen() {
           onClick={(e) => e.stopPropagation()}
         >
           <SideBar
-            category={category}
-            categories={categories}
             showSettings={showSettings}
-            onCategory={setCategory}
+            onPasswords={() => setShowSettings(false)}
             onSettings={setShowSettings}
             onClose={() => setShowSideBar(false)}
           />
@@ -43,14 +39,7 @@ function DashboardScreen() {
               setShowSideBar(true);
             }}
           />
-          {showSettings ? (
-            <ProfilePage />
-          ) : (
-            <PasswordsPage
-              category={category}
-              onChangeCategories={setCategories}
-            />
-          )}
+          {showSettings ? <ProfilePage /> : <PasswordsPage />}
         </div>
       </div>
     </ModalProvider>
